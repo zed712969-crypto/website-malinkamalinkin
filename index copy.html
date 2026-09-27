@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>малинка  —  сын шл...</title>
+  <meta name="description" content="малинка — сын шл..." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <main class="relative">
+
+    <!-- ═══════════════════════════════════════
+         SECTION 1 — HERO (sticky, 100dvh)
+         3D model background + text overlay
+         ═══════════════════════════════════════ -->
+    <section class="hero" id="hero">
+
+      <!-- Three.js canvas -->
+      <div class="hero-bg">
+        <canvas id="gl"></canvas>
+      </div>
+
+      <!-- Floating cursor badge on model hover -->
+      <div class="cursor-badge" id="cursor-badge">CLICK ME</div>
+
+      <!-- Petpet Meme Hand Overlay -->
+      <img src="pet_hand.gif" id="pet-hand" class="petpet-hand" alt="Petting hand" />
+
+      <!-- Text overlay (z-10 above canvas) -->
+      <div class="hero-layer" id="hero-layer">
+
+        <!-- TOP: name (left) + roles (right) -->
+        <header class="row row-top">
+          <h1 class="text-display" data-enter="0">малинка</h1>
+          <ul class="col col-right gap-1">
+            <li><span data-enter="1"><span class="chip" data-scramble>C++ Developer</span></span></li>
+            <li><span data-enter="2"><span class="chip" data-scramble>Web-Developer</span></span></li>
+            <li><span data-enter="3"><span class="chip" data-scramble>Windhawk Modder</span></span></li>
+            <li><span data-enter="4"><span class="chip" data-scramble>TG API Developer</span></span></li>
+          </ul>
+        </header>
+
+        <!-- MIDDLE: info (left) + details (right) -->
+        <div class="row row-mid">
+          <ul class="col col-left gap-1">
+            <li><span data-enter="5"><span class="chip" data-scramble>Open-source at <a href="https://github.com/" target="_blank" rel="noopener noreferrer" class="mention">@GitHub</a></span></span></li>
+            <li><span data-enter="7"><span class="chip" data-scramble>Community <a href="https://windhawk.net/" target="_blank" rel="noopener noreferrer" class="mention">@Windhawk</a></span></span></li>
+          </ul>
+          <ul class="col col-right gap-1 self-end">
+            <li><span data-enter="6"><span class="chip" data-scramble>Penza, Russia. 16yo</span></span></li>
+            <li><span data-enter="8"><span class="chip" data-scramble>Work for coffe</span></span></li>
+          </ul>
+        </div>
+
+        <!-- BOTTOM: links (left) + scroll hint (center) + title (right) -->
+        <footer class="row row-bot">
+          <nav aria-label="Links">
+            <ul class="col col-left gap-1">
+              <li><span data-enter="9"><a href="https://github.com/zed712969-crypto" target="_blank" rel="noopener noreferrer" class="chip chip-link" data-scramble>GitHub</a></span></li>
+              <li><span data-enter="10"><a href="https://t.me/mallnkatg" target="_blank" rel="noopener noreferrer" class="chip chip-link" data-scramble>Telegram</a></span></li>
+              <li><span data-enter="11"><a href="https://discord.gg/8Ahs6jmTg" target="_blank" rel="noopener noreferrer" class="chip chip-link" data-scramble>Discord</a></span></li>
+              <li><span data-enter="12"><a href="https://www.duolingo.com/profile/AXt918" target="_blank" rel="noopener noreferrer" class="chip chip-link" data-scramble>Duo</a></span></li>
+            </ul>
+          </nav>
+
+          <span data-enter="15" class="scroll-hint-wrap">
+            <button type="button" class="chip scroll-hint text-micro" id="btn-scroll">SCROLL DOWN</button>
+          </span>
+
+          <p class="text-display text-right" data-enter="14">Fullstack<br/>Developer</p>
+        </footer>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         SECTION 2 — WORKS (scrolls over hero)
+         ═══════════════════════════════════════ -->
+    <section class="works" id="works">
+
+      <!-- Color scheme switcher + sound toggle -->
+      <div class="scheme-bar">
+        <button type="button" aria-pressed="true" class="chip chip-link text-micro" id="btn-sound">SOUND ON</button>
+        <button type="button" class="sw active" data-scheme="0" aria-label="Blue"        style="--sb:#1337ff;--sd:#e6e6e6"></button>
+        <button type="button" class="sw"        data-scheme="1" aria-label="Light blue"   style="--sb:#d9d9d9;--sd:#1337ff"></button>
+        <button type="button" class="sw"        data-scheme="2" aria-label="Red"          style="--sb:#ff1337;--sd:#e6e6e6"></button>
+        <button type="button" class="sw"        data-scheme="3" aria-label="Light red"    style="--sb:#d9d9d9;--sd:#ff1337"></button>
+        <button type="button" class="sw"        data-scheme="4" aria-label="Dark"         style="--sb:#1e1e1e;--sd:#e6e6e6"></button>
+        <button type="button" class="sw"        data-scheme="5" aria-label="Light dark"   style="--sb:#d9d9d9;--sd:#1e1e1e"></button>
+      </div>
+
+      <!-- Works grid (3 groups, diagonal layout) -->
+      <div class="works-grid">
+        <div class="wg wg-tl">
+          <span class="chip-solid">Projects</span>
+          <a href="#" class="chip chip-link">Windhawk Quick Translator</a>
+          <a href="#" class="chip chip-link">Windhawk Desktop Icons Transparency</a>
+          <a href="#" class="chip chip-link">Telegram Bots for everyday</a>
+          <a href="#" class="chip chip-link">Python/C++ script</a>
+        </div>
+        <div class="wg wg-c">
+          <span class="chip-solid">Tech Stack</span>
+          <span class="chip">C++ / Win32 API</span>
+          <span class="chip">Python / Assembler</span>
+          <span class="chip">Git / VS Code / CMake</span>
+        </div>
+        <div class="wg wg-br">
+          <span class="chip-solid">Links</span>
+          <a href="https://github.com/zed712969-crypto" target="_blank" rel="noopener noreferrer" class="chip chip-link">github.com/me</a>
+          <a href="https://t.me/mallnkatg" target="_blank" rel="noopener noreferrer" class="chip chip-link">t.me/me</a>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!--
+    ╔════════════════════════════════════════════════════════════╗
+    ║  MODEL SETUP                                               ║
+    ║  1. Download Skipper model from Sketchfab:                 ║
+    ║     https://sketchfab.com/3d-models/skipper-eb3db0d0e67944c2b80a16a1b3b78ea7 ║
+    ║  2. Click "Download 3D Model" → choose glTF format        ║
+    ║  3. Extract the .zip                                       ║
+    ║  4. Copy the files into models/ folder:                    ║
+    ║     models/scene.gltf  (or scene.glb)                      ║
+    ║     models/textures/   (if present)                        ║
+    ║  The code auto-detects: skipper.glb → scene.gltf → scene.glb ║
+    ║  Falls back to a primitive 3D penguin if nothing found.    ║
+    ╚════════════════════════════════════════════════════════════╝
+  -->
+
+  <!-- Three.js r128 + loaders -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
