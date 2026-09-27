@@ -149,28 +149,59 @@ swatches.forEach((sw, i) => sw.addEventListener('click', () => applyScheme(i)));
 const btnSound = document.getElementById('btn-sound');
 let soundOn = true, audioCtx = null;
 
+function ensureAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+  return audioCtx;
+}
+
 btnSound.addEventListener('click', () => {
   soundOn = !soundOn;
   btnSound.textContent = soundOn ? 'SOUND ON' : 'SOUND OFF';
+  if (soundOn) btnClick();
 });
 
+// Crisp, audible UI hover tick (louder: 0.09 instead of 0.02)
 function tick() {
   if (!soundOn) return;
   try {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
+    const ctx = ensureAudioCtx();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
     o.type = 'sine';
-    o.frequency.value = 700 + Math.random() * 500;
-    g.gain.value = 0.02;
-    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.06);
-    o.connect(g).connect(audioCtx.destination);
+    o.frequency.value = 850 + Math.random() * 450;
+    g.gain.setValueAtTime(0.09, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.05);
+    o.connect(g).connect(ctx.destination);
     o.start();
-    o.stop(audioCtx.currentTime + 0.06);
+    o.stop(ctx.currentTime + 0.05);
   } catch (_) {}
 }
 
-document.querySelectorAll('.chip-link').forEach(el => el.addEventListener('mouseenter', tick));
+// Snappy tactile UI click sound
+function btnClick() {
+  if (!soundOn) return;
+  try {
+    const ctx = ensureAudioCtx();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(1100, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(420, ctx.currentTime + 0.06);
+    g.gain.setValueAtTime(0.12, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.06);
+    o.connect(g).connect(ctx.destination);
+    o.start();
+    o.stop(ctx.currentTime + 0.06);
+  } catch (_) {}
+}
+
+// Attach hover and click feedback to all buttons and chips
+const interactiveButtons = document.querySelectorAll('.chip-link, .sw, #btn-scroll, #btn-sound, .scroll-hint');
+interactiveButtons.forEach(el => {
+  el.addEventListener('mouseenter', tick);
+  el.addEventListener('click', btnClick);
+});
 
 /* ──────────────────────────────────────────
    4. SCROLL HINT
@@ -277,6 +308,7 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
   // ── Mouse tracking & Hover "CLICK ME" badge ──
   let mx = 0, my = 0;
   const cursorBadge = document.getElementById('cursor-badge');
+  const petHandEl = document.getElementById('pet-hand');
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   let modelGroup = null;
@@ -284,17 +316,176 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
   let activeAction = null;
   let isHoveringCat = false;
 
+  // ── "ПАТ-ПАТ" Petpet Meme System (Sound: MyInstants Pato Pato) ──
+  const PAT_VOLUME = 0.14; // Soft & gentle volume
+  let patBuffer = null;
+  const patFallbackAudio = new Audio('pato.mp3');
+
+  function getAudioContext() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+    return audioCtx;
+  }
+
+  function loadPatBuffer() {
+    try {
+      const ctx = getAudioContext();
+      if (!patBuffer && ctx) {
+        fetch('pato.mp3')
+          .then(res => res.arrayBuffer())
+          .then(arr => ctx.decodeAudioData(arr))
+          .then(buf => { patBuffer = buf; })
+          .catch(() => {});
+      }
+    } catch (_) {}
+  }
+
+  // Pre-load audio buffer early
+  window.addEventListener('pointerdown', loadPatBuffer, { once: true });
+  window.addEventListener('touchstart', loadPatBuffer, { once: true });
+  window.addEventListener('mouseenter', loadPatBuffer, { once: true });
+
+  let patSquish = 0;
+  let patVelocity = 0;
+  let isPatHolding = false;
+  let patInterval = null;
+  let handHideTimeout = null;
+  let lastPatTime = 0;
+
+  function playPatSound() {
+    if (!soundOn) return;
+    try {
+      const ctx = getAudioContext();
+      if (ctx && patBuffer) {
+        const source = ctx.createBufferSource();
+        source.buffer = patBuffer;
+        // Subtle micro-pitch variation for lively tactile feedback
+        source.playbackRate.value = 0.97 + Math.random() * 0.06;
+        const gain = ctx.createGain();
+        gain.gain.value = PAT_VOLUME;
+        source.connect(gain).connect(ctx.destination);
+        source.start(0);
+        return;
+      }
+    } catch (_) {}
+
+    try {
+      const a = patFallbackAudio.cloneNode();
+      a.volume = PAT_VOLUME;
+      a.play().catch(() => {});
+    } catch (_) {}
+  }
+
+  function updatePetHandPosition() {
+    if (!petHandEl || !camera) return;
+
+    // Central vertical axis is at X=0, Z=0.
+    // Top of the cat's head is at Y = 1.38 in world space, compressed by patSquish.
+    // Because X=0 and Z=0, this point stays perfectly centered and NEVER orbits with the spinning cat!
+    const headWorldY = 1.38 - patSquish * 0.32;
+    const headVec = new THREE.Vector3(0, headWorldY, 0);
+    headVec.project(camera);
+
+    const screenX = (headVec.x * 0.5 + 0.5) * window.innerWidth;
+    const screenY = (-(headVec.y * 0.5) + 0.5) * window.innerHeight;
+
+    petHandEl.style.left = `${screenX}px`;
+    petHandEl.style.top = `${screenY}px`;
+  }
+
+  function doPat() {
+    lastPatTime = performance.now();
+
+    // Add squish downward velocity impulse
+    patVelocity += 2.8;
+
+    // Play signature pat-pat sound from Tuna Voicemod
+    playPatSound();
+
+    // Show and maintain meme petting hand smoothly
+    if (petHandEl) {
+      clearTimeout(handHideTimeout);
+      if (!petHandEl.classList.contains('active')) {
+        petHandEl.src = 'pet_hand.gif?t=' + Date.now();
+        petHandEl.classList.add('active');
+      }
+      // Keep hand active for at least one full stroke
+      handHideTimeout = setTimeout(() => {
+        if (!isPatHolding && petHandEl) {
+          petHandEl.classList.remove('active');
+        }
+      }, 260);
+    }
+
+    // Cute slight spin boost
+    if (activeAction) {
+      activeAction.timeScale = 0.32;
+      clearTimeout(activeAction._patTimeout);
+      activeAction._patTimeout = setTimeout(() => {
+        if (activeAction) activeAction.timeScale = 0.11;
+      }, 700);
+    }
+  }
+
+  function startPatting(clientX, clientY) {
+    if (!modelGroup || !camera) return;
+
+    pointer.x = (clientX / window.innerWidth) * 2 - 1;
+    pointer.y = -(clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    const hits = raycaster.intersectObjects(modelGroup.children, true);
+
+    if (hits.length > 0) {
+      loadPatBuffer();
+      isPatHolding = true;
+      doPat();
+
+      // Continuous rapid patting if held down (200ms per pat matches GIF loop & Tuna tempo)
+      clearInterval(patInterval);
+      patInterval = setInterval(() => {
+        if (isPatHolding) {
+          doPat();
+        } else {
+          clearInterval(patInterval);
+          patInterval = null;
+        }
+      }, 200);
+    }
+  }
+
+  function stopPatting() {
+    if (!isPatHolding && !patInterval) return;
+    isPatHolding = false;
+    if (patInterval) {
+      clearInterval(patInterval);
+      patInterval = null;
+    }
+    if (petHandEl) {
+      clearTimeout(handHideTimeout);
+      // Ensure the hand finishes its current stroke so it never abruptly cuts off!
+      const elapsed = performance.now() - lastPatTime;
+      const remainingStroke = Math.max(0, 200 - elapsed);
+      handHideTimeout = setTimeout(() => {
+        if (!isPatHolding && petHandEl) {
+          petHandEl.classList.remove('active');
+        }
+      }, remainingStroke + 50);
+    }
+  }
+
   window.addEventListener('mousemove', e => {
     mx = (e.clientX / window.innerWidth - 0.5) * 2;
     my = (e.clientY / window.innerHeight - 0.5) * 2;
 
-    // Follow cursor precisely
     if (cursorBadge) {
       cursorBadge.style.left = `${e.clientX}px`;
       cursorBadge.style.top = `${e.clientY}px`;
     }
 
-    // Raycast hover check against 3D character
     if (modelGroup && camera) {
       pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
       pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
@@ -305,10 +496,13 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
         if (!isHoveringCat) {
           isHoveringCat = true;
           document.body.style.cursor = 'pointer';
-          cursorBadge?.classList.add('visible');
+          if (cursorBadge) {
+            cursorBadge.textContent = 'CLICK ME';
+            cursorBadge.classList.add('visible');
+          }
         }
       } else {
-        if (isHoveringCat) {
+        if (isHoveringCat && !isPatHolding) {
           isHoveringCat = false;
           document.body.style.cursor = '';
           cursorBadge?.classList.remove('visible');
@@ -321,9 +515,28 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
     isHoveringCat = false;
     document.body.style.cursor = '';
     cursorBadge?.classList.remove('visible');
+    stopPatting();
   });
 
-  // Mobile touch drag to tilt 3D model
+  // Hold-to-pat & click on desktop
+  canvas.addEventListener('mousedown', e => {
+    startPatting(e.clientX, e.clientY);
+  });
+  window.addEventListener('mouseup', stopPatting);
+
+  // Hold-to-pat & tap on mobile
+  canvas.addEventListener('touchstart', e => {
+    if (e.touches && e.touches[0]) {
+      const touch = e.touches[0];
+      mx = (touch.clientX / window.innerWidth - 0.5) * 2;
+      my = (touch.clientY / window.innerHeight - 0.5) * 2;
+      startPatting(touch.clientX, touch.clientY);
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchend', stopPatting);
+  window.addEventListener('touchcancel', stopPatting);
+
   window.addEventListener('touchmove', e => {
     if (e.touches && e.touches[0]) {
       mx = (e.touches[0].clientX / window.innerWidth - 0.5) * 2;
@@ -331,37 +544,10 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
     }
   }, { passive: true });
 
-  // Mobile tap on 3D cat
-  window.addEventListener('touchstart', e => {
-    if (e.touches && e.touches[0]) {
-      const touch = e.touches[0];
-      mx = (touch.clientX / window.innerWidth - 0.5) * 2;
-      my = (touch.clientY / window.innerHeight - 0.5) * 2;
-
-      if (modelGroup && camera) {
-        pointer.x = (touch.clientX / window.innerWidth) * 2 - 1;
-        pointer.y = -(touch.clientY / window.innerHeight) * 2 + 1;
-        raycaster.setFromCamera(pointer, camera);
-        const hits = raycaster.intersectObjects(modelGroup.children, true);
-        if (hits.length > 0) {
-          startReveal();
-          if (activeAction) {
-            activeAction.timeScale = 0.45;
-            setTimeout(() => {
-              if (activeAction) activeAction.timeScale = 0.11;
-            }, 1200);
-          }
-        }
-      }
-    }
-  }, { passive: true });
-
-  // Mobile Gyroscope tilt (responds to physical phone inclination)
+  // Gyroscope tilt
   if (window.DeviceOrientationEvent) {
     window.addEventListener('deviceorientation', e => {
       if (e.gamma !== null && e.beta !== null) {
-        // gamma: left/right tilt [-90, 90]
-        // beta: front/back tilt [-180, 180]
         mx = Math.min(Math.max(e.gamma / 25, -1), 1);
         my = Math.min(Math.max((e.beta - 45) / 25, -1), 1);
       }
@@ -410,28 +596,6 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
       rm.mesh.geometry.setDrawRange(0, count);
     });
   }
-
-  // ── Click to rebuild & spin boost ──
-  canvas.addEventListener('click', e => {
-    if (!modelGroup) return;
-
-    pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
-    pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
-    raycaster.setFromCamera(pointer, camera);
-    const hits = raycaster.intersectObjects(modelGroup.children, true);
-
-    if (hits.length > 0) {
-      startReveal();
-
-      // Fun interaction: spin speed boost on click!
-      if (activeAction) {
-        activeAction.timeScale = 0.45;
-        setTimeout(() => {
-          if (activeAction) activeAction.timeScale = 0.11;
-        }, 1200);
-      }
-    }
-  });
 
   // ── Load GLB Model (check models/model.glb first!) ──
   const MODEL_PATHS = [
@@ -716,6 +880,25 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
       }
     }
 
+    // ── Spring Physics for "пат-пат" squish ──
+    if (modelGroup) {
+      const dtClamped = Math.min(dt, 0.05);
+      const springK = 280; // snappy, elastic bounce
+      const damping = 16;  // smooth decay
+      const force = -springK * patSquish - damping * patVelocity;
+      patVelocity += force * dtClamped;
+      patSquish += patVelocity * dtClamped;
+
+      // Squish deformation: compresses Y, bulges X and Z (volume conservation)
+      const sy = Math.max(0.35, 1 - patSquish * 0.42);
+      const sxz = Math.max(0.6, 1 + patSquish * 0.30);
+      modelGroup.scale.set(sxz, sy, sxz);
+      modelGroup.position.y = -patSquish * 0.22;
+
+      // Position petpet meme hand right on the cat head in screen space
+      updatePetHandPosition();
+    }
+
     // Mouse follow (smooth subtle tilt towards cursor)
     modelGroup.rotation.y += (mx * 0.25 - modelGroup.rotation.y) * 0.04;
     modelGroup.rotation.x += (-my * 0.1 - modelGroup.rotation.x) * 0.04;
@@ -908,4 +1091,23 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
   animate();
 })();
 
-console.log('🐧 Skipper is ready. Just smile and wave, boys.');
+/* ──────────────────────────────────────────
+   DYNAMIC PAGE TITLE & CONSOLE EASTER EGG
+   ────────────────────────────────────────── */
+const ORIG_TITLE = "малинка  —  сын шл...";
+const AWAY_TITLE = "куда ушел, вернись...";
+
+document.addEventListener('visibilitychange', () => {
+  document.title = document.hidden ? AWAY_TITLE : ORIG_TITLE;
+});
+
+window.addEventListener('blur', () => {
+  document.title = AWAY_TITLE;
+});
+
+window.addEventListener('focus', () => {
+  document.title = ORIG_TITLE;
+});
+
+console.log("че ты пялишь? код на гитхабе)");
+

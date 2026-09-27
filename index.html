@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>малинка — сын шл...</title>
+  <title>малинка  —  сын шл...</title>
   <meta name="description" content="малинка — сын шл..." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -29,6 +29,9 @@
 
       <!-- Floating cursor badge on model hover -->
       <div class="cursor-badge" id="cursor-badge">CLICK ME</div>
+
+      <!-- Petpet Meme Hand Overlay -->
+      <img src="pet_hand.gif" id="pet-hand" class="petpet-hand" alt="Petting hand" />
 
       <!-- Text overlay (z-10 above canvas) -->
       <div class="hero-layer" id="hero-layer">
@@ -138,16 +141,5 @@
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
   <script src="app.js"></script>
-
-<script>
-    window.addEventListener('blur', () => {
-      document.title = 'куда ушел, вернись...';
-    });
-
-    window.addEventListener('focus', () => {
-      document.title = 'малинка — сын шл...';
-    });
-  </script>
-
 </body>
 </html>

@@ -412,3 +412,30 @@ html { scrollbar-width: none; }
   opacity: 1;
   transform: translate3d(-50%, -150%, 0) scale(1);
 }
+
+/* ═══════════════════════════════════════════
+   PETPET MEME HAND
+   ════════════════════════════════════════════ */
+.petpet-hand {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: clamp(170px, 22vw, 290px);
+  height: clamp(170px, 22vw, 290px);
+  pointer-events: none;
+  z-index: 80;
+  opacity: 0;
+  transform: translate(-38%, -88%) scale(0.92);
+  transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.15));
+  will-change: transform, opacity;
+}
+
+.petpet-hand.active {
+  opacity: 1;
+  transform: translate(-38%, -72%) scale(1);
+  transition: opacity 0.1s ease-out, transform 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
