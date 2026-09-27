@@ -1706,7 +1706,7 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
 /* ──────────────────────────────────────────
    DYNAMIC PAGE TITLE & CONSOLE EASTER EGG
    ────────────────────────────────────────── */
-const ORIG_TITLE = "Malinka  —  сын шл...";
+const ORIG_TITLE = "малинка  —  сын шл...";
 const AWAY_TITLE = "куда ушел, вернись...";
 
 document.addEventListener('visibilitychange', () => {
