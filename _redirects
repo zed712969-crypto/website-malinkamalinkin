@@ -1,9 +1,0 @@
-# Обманка для .env
-/.env  /fake_env.txt  200
-
-# Обманка для конфигов (если php файлы тоже не грузит)
-/wp-config.php  /wp-config.php  200
-/wordpress/wp-admin/setup-config.php  /wordpress/wp-admin/setup-config.php  200
-
-# Если бот ищет wp-admin, кидаем его на Нурлана (или твою html-ку)
-/wp-admin/*  /admin/index.html  200
