@@ -8,11 +8,22 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@700;800;900&family=Geist+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐱</text></svg>" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
+  <!-- Background Lo-Fi Player (Preloaded & Autoplay) -->
+  <audio id="lofi-audio" src="lofi.mp3" loop preload="auto" autoplay playsinline></audio>
+
+  <!-- iPhone Setup "Hello" Multilingual Intro Overlay -->
+  <div id="hello-intro" class="hello-intro" aria-hidden="true">
+    <div class="hello-wrap">
+      <span class="hello-text text-display" id="hello-text">Hello!</span>
+    </div>
+  </div>
 
   <main class="relative">
 
@@ -85,36 +96,47 @@
          ═══════════════════════════════════════ -->
     <section class="works" id="works">
 
-      <!-- Color scheme switcher + sound toggle -->
+      <!-- Color scheme switcher + sound toggle + lofi volume -->
       <div class="scheme-bar">
-        <button type="button" aria-pressed="true" class="chip chip-link text-micro" id="btn-sound">SOUND ON</button>
-        <button type="button" class="sw active" data-scheme="0" aria-label="Blue"        style="--sb:#1337ff;--sd:#e6e6e6"></button>
-        <button type="button" class="sw"        data-scheme="1" aria-label="Light blue"   style="--sb:#d9d9d9;--sd:#1337ff"></button>
-        <button type="button" class="sw"        data-scheme="2" aria-label="Red"          style="--sb:#ff1337;--sd:#e6e6e6"></button>
-        <button type="button" class="sw"        data-scheme="3" aria-label="Light red"    style="--sb:#d9d9d9;--sd:#ff1337"></button>
-        <button type="button" class="sw"        data-scheme="4" aria-label="Dark"         style="--sb:#1e1e1e;--sd:#e6e6e6"></button>
-        <button type="button" class="sw"        data-scheme="5" aria-label="Light dark"   style="--sb:#d9d9d9;--sd:#1e1e1e"></button>
+        <span data-enter-works="0"><button type="button" aria-pressed="true" class="chip chip-link text-micro" id="btn-sound" data-scramble>SOUND ON</button></span>
+        <span data-enter-works="1">
+          <div class="lofi-control chip">
+            <button type="button" class="lofi-toggle text-micro chip-link active" id="btn-lofi" aria-pressed="true" aria-label="Toggle Lo-Fi">LOFI ⏸</button>
+            <div class="vol-slider-wrap">
+              <input type="range" class="lofi-volume-slider" id="lofi-volume" min="0" max="100" value="30" step="1" aria-label="Lo-Fi Volume" />
+              <span class="vol-val text-micro" id="vol-val">30%</span>
+            </div>
+          </div>
+        </span>
+        <span data-enter-works="2" class="scheme-swatches-wrap" style="display:inline-flex;gap:4px;">
+          <button type="button" class="sw active" data-scheme="0" aria-label="Blue"        style="--sb:#1337ff;--sd:#e6e6e6"></button>
+          <button type="button" class="sw"        data-scheme="1" aria-label="Light blue"   style="--sb:#d9d9d9;--sd:#1337ff"></button>
+          <button type="button" class="sw"        data-scheme="2" aria-label="Red"          style="--sb:#ff1337;--sd:#e6e6e6"></button>
+          <button type="button" class="sw"        data-scheme="3" aria-label="Light red"    style="--sb:#d9d9d9;--sd:#ff1337"></button>
+          <button type="button" class="sw"        data-scheme="4" aria-label="Dark"         style="--sb:#1e1e1e;--sd:#e6e6e6"></button>
+          <button type="button" class="sw"        data-scheme="5" aria-label="Light dark"   style="--sb:#d9d9d9;--sd:#1e1e1e"></button>
+        </span>
       </div>
 
       <!-- Works grid (3 groups, diagonal layout) -->
       <div class="works-grid">
         <div class="wg wg-tl">
-          <span class="chip-solid">Projects</span>
-          <a href="#" class="chip chip-link">Windhawk Quick Translator</a>
-          <a href="#" class="chip chip-link">Windhawk Desktop Icons Transparency</a>
-          <a href="#" class="chip chip-link">Telegram Bots for everyday</a>
-          <a href="#" class="chip chip-link">Python/C++ script</a>
+          <span data-enter-works="3"><span class="chip-solid" data-scramble>Projects</span></span>
+          <span data-enter-works="4"><a href="#" class="chip chip-link" data-scramble>Windhawk Quick Translator</a></span>
+          <span data-enter-works="5"><a href="#" class="chip chip-link" data-scramble>Windhawk Desktop Icons Transparency</a></span>
+          <span data-enter-works="6"><a href="#" class="chip chip-link" data-scramble>Telegram Bots for everyday</a></span>
+          <span data-enter-works="7"><a href="#" class="chip chip-link" data-scramble>Python/C++ script</a></span>
         </div>
         <div class="wg wg-c">
-          <span class="chip-solid">Tech Stack</span>
-          <span class="chip">C++ / Win32 API</span>
-          <span class="chip">Python / Assembler</span>
-          <span class="chip">Git / VS Code / CMake</span>
+          <span data-enter-works="8"><span class="chip-solid" data-scramble>Tech Stack</span></span>
+          <span data-enter-works="9"><span class="chip" data-scramble>C++ / Win32 API</span></span>
+          <span data-enter-works="10"><span class="chip" data-scramble>Python / Assembler</span></span>
+          <span data-enter-works="11"><span class="chip" data-scramble>Git / VS Code / CMake</span></span>
         </div>
         <div class="wg wg-br">
-          <span class="chip-solid">Links</span>
-          <a href="https://github.com/zed712969-crypto" target="_blank" rel="noopener noreferrer" class="chip chip-link">github.com/me</a>
-          <a href="https://t.me/mallnkatg" target="_blank" rel="noopener noreferrer" class="chip chip-link">t.me/me</a>
+          <span data-enter-works="12"><span class="chip-solid" data-scramble>Links</span></span>
+          <span data-enter-works="13"><a href="https://github.com/zed712969-crypto" target="_blank" rel="noopener noreferrer" class="chip chip-link" data-scramble>github.com/me</a></span>
+          <span data-enter-works="14"><a href="https://t.me/mallnkatg" target="_blank" rel="noopener noreferrer" class="chip chip-link" data-scramble>t.me/me</a></span>
         </div>
       </div>
 
