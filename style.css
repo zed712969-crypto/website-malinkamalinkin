@@ -594,16 +594,27 @@ html { scrollbar-width: none; }
    ════════════════════════════════════════════ */
 .hello-intro {
   position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
   inset: 0;
   z-index: 99999;
   background: var(--h-bg);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  -webkit-user-select: none;
   user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
   pointer-events: auto;
   opacity: 1;
-  will-change: opacity, filter, transform;
+  will-change: opacity, transform;
 }
 
 /* 1. WARMUP PHASE ("Прогрев") — digital text flicker + micro-shake, solid opaque background */
@@ -618,7 +629,7 @@ html { scrollbar-width: none; }
     helloTextWarmupJitter 0.06s infinite linear,
     helloTextWarmupFlicker 0.11s infinite steps(1),
     helloTextSlice 0.12s infinite steps(2);
-  will-change: transform, clip-path, opacity;
+  will-change: transform, opacity;
 }
 
 @keyframes helloWarmupShake {
@@ -650,13 +661,13 @@ html { scrollbar-width: none; }
 }
 
 @keyframes helloTextSlice {
-  0%   { clip-path: inset(0 0 0 0); }
-  15%  { clip-path: inset(18% 0 52% 0); }
-  30%  { clip-path: inset(0 0 0 0); }
-  50%  { clip-path: inset(62% 0 10% 0); }
-  70%  { clip-path: inset(8% 0 74% 0); }
-  85%  { clip-path: inset(0 0 0 0); }
-  100% { clip-path: inset(0 0 0 0); }
+  0%   { -webkit-clip-path: inset(0 0 0 0); clip-path: inset(0 0 0 0); }
+  15%  { -webkit-clip-path: inset(18% 0 52% 0); clip-path: inset(18% 0 52% 0); }
+  30%  { -webkit-clip-path: inset(0 0 0 0); clip-path: inset(0 0 0 0); }
+  50%  { -webkit-clip-path: inset(62% 0 10% 0); clip-path: inset(62% 0 10% 0); }
+  70%  { -webkit-clip-path: inset(8% 0 74% 0); clip-path: inset(8% 0 74% 0); }
+  85%  { -webkit-clip-path: inset(0 0 0 0); clip-path: inset(0 0 0 0); }
+  100% { -webkit-clip-path: inset(0 0 0 0); clip-path: inset(0 0 0 0); }
 }
 
 /* 2. BOOM PHASE ("Бум") — sudden contrast/brightness burst & punch zoom dissolution */
@@ -672,18 +683,21 @@ html { scrollbar-width: none; }
 @keyframes helloBoom {
   0% {
     opacity: 1;
-    filter: brightness(2.8) contrast(1.5);
+    -webkit-filter: brightness(2.6) contrast(1.4);
+    filter: brightness(2.6) contrast(1.4);
     transform: scale(1);
   }
   20% {
     opacity: 0.95;
-    filter: brightness(2.2) contrast(1.3);
-    transform: scale(1.05);
+    -webkit-filter: brightness(2) contrast(1.2);
+    filter: brightness(2) contrast(1.2);
+    transform: scale(1.04);
   }
   100% {
     opacity: 0;
-    filter: brightness(1) blur(10px);
-    transform: scale(1.15);
+    -webkit-filter: brightness(1);
+    filter: brightness(1);
+    transform: scale(1.12);
   }
 }
 
@@ -691,38 +705,42 @@ html { scrollbar-width: none; }
   0% {
     opacity: 1;
     transform: scale(1);
-    filter: brightness(2.2);
   }
   30% {
     opacity: 0.9;
-    transform: scale(1.22);
-    filter: brightness(1.6) blur(2px);
+    transform: scale(1.18);
   }
   100% {
     opacity: 0;
-    transform: scale(1.4);
-    filter: blur(14px);
+    transform: scale(1.35);
   }
 }
 
 .hello-wrap {
   text-align: center;
-  padding: 24px;
+  padding: 16px;
+  max-width: 100vw;
+  box-sizing: border-box;
 }
 
 .hello-text {
   display: inline-block;
   font-family: var(--display);
   font-weight: 800;
-  font-size: clamp(3.5rem, 11vw, 8.5rem);
-  line-height: 1;
-  letter-spacing: -0.045em;
+  font-size: clamp(2.2rem, 11vw, 8rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
   color: var(--h-ink);
-  will-change: transform, opacity, filter;
+  white-space: nowrap;
+  max-width: 92vw;
+  overflow: hidden;
+  text-overflow: clip;
+  will-change: transform, opacity;
+  -webkit-font-smoothing: antialiased;
 }
 
 .hello-text.word-in {
-  animation: helloWordIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: helloWordIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .hello-text.word-fast {
@@ -732,20 +750,18 @@ html { scrollbar-width: none; }
 @keyframes helloWordIn {
   0% {
     opacity: 0;
-    transform: translateY(16px) scale(0.96);
-    filter: blur(5px);
+    transform: translateY(14px) scale(0.97);
   }
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
-    filter: blur(0);
   }
 }
 
 @keyframes helloWordFast {
   0% {
     opacity: 0.45;
-    transform: translateY(6px);
+    transform: translateY(5px);
   }
   100% {
     opacity: 1;

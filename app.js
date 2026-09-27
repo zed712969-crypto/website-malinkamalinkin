@@ -166,6 +166,7 @@ function startHelloIntro(onComplete) {
     helloIntroFinished = true;
 
     function triggerBoom() {
+      if (animId) cancelAnimationFrame(animId);
       introEl.classList.remove('warmup');
       textEl.classList.remove('glitch-warmup');
       introEl.classList.add('boom');
@@ -178,7 +179,7 @@ function startHelloIntro(onComplete) {
         if (introEl.parentNode) {
           introEl.parentNode.removeChild(introEl);
         }
-      }, 420);
+      }, 450);
     }
 
     if (immediate) {
@@ -197,7 +198,8 @@ function startHelloIntro(onComplete) {
     const baseWord = currentHelloWord || 'Shalom!';
     const len = Math.max(6, baseWord.length);
 
-    function warmupTick(now) {
+    function warmupTick() {
+      const now = performance.now();
       const elapsed = now - startTime;
       const progress = Math.min(1, elapsed / WARMUP_DURATION);
 
@@ -244,17 +246,38 @@ function startHelloIntro(onComplete) {
     currentHelloWord = item.text;
     textEl.textContent = item.text;
 
-    // Trigger kinetic entry animation
-    textEl.classList.remove('word-in', 'word-fast');
-    void textEl.offsetWidth; // Reflow for instant animation restart
-    textEl.classList.add(index > 4 ? 'word-fast' : 'word-in');
+    // Kinetic entry animation using Web Animations API (native & 60/120fps on mobile)
+    if (typeof textEl.animate === 'function') {
+      const animDur = Math.min(240, Math.max(45, item.dur * 0.75));
+      textEl.animate([
+        { opacity: 0.2, transform: index > 4 ? 'translateY(4px)' : 'translateY(12px) scale(0.97)' },
+        { opacity: 1, transform: 'translateY(0) scale(1)' }
+      ], {
+        duration: animDur,
+        easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+        fill: 'both'
+      });
+    } else {
+      textEl.classList.remove('word-in', 'word-fast');
+      void textEl.offsetWidth;
+      textEl.classList.add(index > 4 ? 'word-fast' : 'word-in');
+    }
 
     index++;
     setTimeout(step, item.dur);
   }
 
-  // Double click or Escape allows quick skip
+  // Quick skip: double click, touch double-tap, or Escape
   introEl.addEventListener('dblclick', () => finishHelloIntro(true));
+  let lastTouch = 0;
+  introEl.addEventListener('touchend', () => {
+    const t = performance.now();
+    if (t - lastTouch < 320) {
+      finishHelloIntro(true);
+    }
+    lastTouch = t;
+  }, { passive: true });
+
   window.addEventListener('keydown', e => {
     if (e.key === 'Escape') finishHelloIntro(true);
   }, { once: true });
@@ -269,8 +292,12 @@ function startHelloIntro(onComplete) {
   step();
 }
 
-// Start with iPhone "Hello" multilingual intro, then run entrance animations
-startHelloIntro(runEntranceAnimations);
+// Start with iPhone "Hello" multilingual intro as soon as DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => startHelloIntro(runEntranceAnimations), { once: true });
+} else {
+  startHelloIntro(runEntranceAnimations);
+}
 
 // Staggered entrance for Works section ("синяя шапка") on first scroll
 let worksAnimated = false;
@@ -1706,7 +1733,7 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
 /* ──────────────────────────────────────────
    DYNAMIC PAGE TITLE & CONSOLE EASTER EGG
    ────────────────────────────────────────── */
-const ORIG_TITLE = "малинка  —  сын шл...";
+const ORIG_TITLE = "Malinka  —  сын шл...";
 const AWAY_TITLE = "куда ушел, вернись...";
 
 document.addEventListener('visibilitychange', () => {
