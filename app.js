@@ -218,6 +218,17 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
   const canvas = document.getElementById('gl');
   if (!canvas) return;
 
+  const cursorBadge = document.getElementById('cursor-badge');
+  const petHandEl = document.getElementById('pet-hand');
+
+  // State variables for petting & squish
+  let patSquish = 0;
+  let patVelocity = 0;
+  let isPatHolding = false;
+  let patInterval = null;
+  let handHideTimeout = null;
+  let lastPatTime = 0;
+
   // ── Renderer ──
   const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -242,6 +253,7 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
       camera.position.z = 5.2;
     }
     camera.updateProjectionMatrix();
+    updatePetHandPosition();
   }
   onResize();
   window.addEventListener('resize', onResize);
@@ -307,8 +319,6 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
 
   // ── Mouse tracking & Hover "CLICK ME" badge ──
   let mx = 0, my = 0;
-  const cursorBadge = document.getElementById('cursor-badge');
-  const petHandEl = document.getElementById('pet-hand');
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   let modelGroup = null;
@@ -349,13 +359,6 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
   window.addEventListener('touchstart', loadPatBuffer, { once: true });
   window.addEventListener('mouseenter', loadPatBuffer, { once: true });
 
-  let patSquish = 0;
-  let patVelocity = 0;
-  let isPatHolding = false;
-  let patInterval = null;
-  let handHideTimeout = null;
-  let lastPatTime = 0;
-
   function playPatSound() {
     if (!soundOn) return;
     try {
@@ -381,12 +384,13 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
   }
 
   function updatePetHandPosition() {
-    if (!petHandEl || !camera) return;
+    if (typeof petHandEl === 'undefined' || !petHandEl || typeof camera === 'undefined' || !camera) return;
 
     // Central vertical axis is at X=0, Z=0.
     // Top of the cat's head is at Y = 1.38 in world space, compressed by patSquish.
     // Because X=0 and Z=0, this point stays perfectly centered and NEVER orbits with the spinning cat!
-    const headWorldY = 1.38 - patSquish * 0.32;
+    const squish = (typeof patSquish !== 'undefined') ? patSquish : 0;
+    const headWorldY = 1.38 - squish * 0.32;
     const headVec = new THREE.Vector3(0, headWorldY, 0);
     headVec.project(camera);
 
@@ -403,8 +407,11 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
     // Add squish downward velocity impulse
     patVelocity += 2.8;
 
-    // Play signature pat-pat sound from Tuna Voicemod
+    // Play signature pat-pat sound
     playPatSound();
+
+    // Ensure hand is positioned directly on the cat head before activating
+    updatePetHandPosition();
 
     // Show and maintain meme petting hand smoothly
     if (petHandEl) {
@@ -704,6 +711,7 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
         }
 
         scene.add(modelGroup);
+        updatePetHandPosition();
 
         // Start polygon reveal
         startReveal();
