@@ -120,31 +120,162 @@ function runEntranceAnimations() {
 }
 
 /* ──────────────────────────────────────────
+   REAL-TIME BROWSER TAB TITLE TYPEWRITER
+   ────────────────────────────────────────── */
+const MAIN_TITLE = "малинка  —  сын шл...";
+const AWAY_TITLE = "куда ушел, вернись...";
+window.MAIN_TITLE = MAIN_TITLE;
+window.AWAY_TITLE = AWAY_TITLE;
+window.__isSiteLoaded = false;
+
+const INVISIBLE_TITLE_CHAR = '\u200E'; // Left-to-Right Mark: 0-width invisible character that prevents Chromium from collapsing empty title to URL/localhost
+
+class TitleTypewriter {
+  constructor(initialText = '') {
+    this.current = (initialText || '').replace(/\u200E/g, '');
+    this.target = this.current;
+    this.activeTask = 0;
+    this.isAnimating = false;
+    this.worker = null;
+    this.initWorker();
+    document.title = this.current || INVISIBLE_TITLE_CHAR;
+  }
+
+  initWorker() {
+    try {
+      const code = `
+        let timer = null;
+        self.onmessage = function(e) {
+          if (e.data.action === 'start') {
+            clearInterval(timer);
+            timer = setInterval(() => self.postMessage('tick'), e.data.interval || 20);
+          } else if (e.data.action === 'stop') {
+            clearInterval(timer);
+          }
+        };
+      `;
+      const blob = new Blob([code], { type: 'application/javascript' });
+      this.worker = new Worker(URL.createObjectURL(blob));
+    } catch (_) {
+      this.worker = null;
+    }
+  }
+
+  to(targetText, options = {}) {
+    if (this.current === targetText && (!this.isAnimating || this.target === targetText)) {
+      return;
+    }
+    this.target = targetText;
+    const taskId = ++this.activeTask;
+    this.isAnimating = true;
+
+    const fromText = this.current;
+    const toText = targetText;
+
+    const eraseSpeed = options.eraseSpeed || 14;
+    const typeSpeed = options.typeSpeed || 24;
+    const pause = options.pause !== undefined ? options.pause : 10;
+    const onComplete = options.onComplete || null;
+
+    // Time-based phase scheduling
+    const eraseDuration = fromText.length * eraseSpeed;
+    const typeDuration = toText.length * typeSpeed;
+
+    const startTime = performance.now();
+    const eraseEndTime = startTime + eraseDuration;
+    const typeStartTime = eraseDuration > 0 ? (eraseEndTime + pause) : startTime;
+    const totalEndTime = typeStartTime + typeDuration;
+
+    let fallbackTimeout = null;
+
+    const tick = () => {
+      if (this.activeTask !== taskId) {
+        if (this.worker) this.worker.postMessage({ action: 'stop' });
+        clearTimeout(fallbackTimeout);
+        return;
+      }
+
+      const now = performance.now();
+
+      if (now < eraseEndTime) {
+        // Erasing phase (time-based interpolation: immune to browser throttling!)
+        const progress = Math.min(1, (now - startTime) / Math.max(1, eraseDuration));
+        const remLen = Math.round(fromText.length * (1 - progress));
+        this.current = fromText.slice(0, remLen);
+        document.title = this.current || INVISIBLE_TITLE_CHAR;
+      } else if (now < typeStartTime) {
+        // Brief pause between erase and type
+        this.current = '';
+        document.title = INVISIBLE_TITLE_CHAR;
+      } else if (now < totalEndTime) {
+        // Typing phase (time-based interpolation)
+        const progress = Math.min(1, (now - typeStartTime) / Math.max(1, typeDuration));
+        const typedLen = Math.round(toText.length * progress);
+        this.current = toText.slice(0, typedLen);
+        document.title = this.current || INVISIBLE_TITLE_CHAR;
+      } else {
+        // Completed
+        this.current = toText;
+        document.title = toText || INVISIBLE_TITLE_CHAR;
+        this.isAnimating = false;
+        if (this.worker) this.worker.postMessage({ action: 'stop' });
+        clearTimeout(fallbackTimeout);
+        if (typeof onComplete === 'function') onComplete();
+        return;
+      }
+
+      if (!this.worker) {
+        fallbackTimeout = setTimeout(tick, 16);
+      }
+    };
+
+    if (this.worker) {
+      this.worker.onmessage = tick;
+      this.worker.postMessage({ action: 'start', interval: 18 });
+    } else {
+      tick();
+    }
+  }
+
+  setInstant(text) {
+    this.activeTask++;
+    this.isAnimating = false;
+    if (this.worker) this.worker.postMessage({ action: 'stop' });
+    this.current = text;
+    this.target = text;
+    document.title = text || INVISIBLE_TITLE_CHAR;
+  }
+}
+
+const titleTypewriter = new TitleTypewriter('');
+window.titleTypewriter = titleTypewriter;
+
+/* ──────────────────────────────────────────
    IPHONE SETUP "HELLO" MULTILINGUAL INTRO
    ────────────────────────────────────────── */
 const HELLO_WORDS = [
-  { text: 'Hello!', dur: 500 },      // English
-  { text: 'Привет!', dur: 380 },     // Russian
-  { text: 'Bonjour!', dur: 290 },    // French
-  { text: 'Hola!', dur: 230 },       // Spanish
-  { text: 'Ciao!', dur: 180 },       // Italian
-  { text: 'Hallo!', dur: 150 },      // German
-  { text: 'こんにちは!', dur: 120 },  // Japanese
-  { text: 'Olá!', dur: 100 },        // Portuguese
-  { text: '안녕하세요!', dur: 85 },   // Korean
-  { text: '你好!', dur: 75 },        // Chinese
-  { text: 'مرحبا!', dur: 70 },       // Arabic
-  { text: 'नमस्ते!', dur: 65 },       // Hindi
-  { text: 'Merhaba!', dur: 60 },     // Turkish
-  { text: 'Hej!', dur: 55 },         // Swedish
-  { text: 'Cześć!', dur: 50 },       // Polish
-  { text: 'Γειά σου!', dur: 45 },    // Greek
+  { text: 'Привет!', dur: 520 },     // Russian
+  { text: 'Hello!', dur: 400 },      // English
+  { text: 'Bonjour!', dur: 300 },    // French
+  { text: 'Hola!', dur: 240 },       // Spanish
+  { text: 'Ciao!', dur: 190 },       // Italian
+  { text: 'Hallo!', dur: 160 },      // German
+  { text: 'こんにちは!', dur: 130 },  // Japanese
+  { text: 'Olá!', dur: 110 },        // Portuguese
+  { text: '안녕하세요!', dur: 95 },   // Korean
+  { text: '你好!', dur: 85 },        // Chinese
+  { text: 'مرحبا!', dur: 75 },       // Arabic
+  { text: 'नमस्ते!', dur: 70 },       // Hindi
+  { text: 'Merhaba!', dur: 65 },     // Turkish
+  { text: 'Hej!', dur: 60 },         // Swedish
+  { text: 'Cześć!', dur: 55 },       // Polish
+  { text: 'Γειά σου!', dur: 50 },    // Greek
   { text: 'Привіт!', dur: 45 },      // Ukrainian
   { text: 'Shalom!', dur: 45 }       // Hebrew
 ];
 
 let helloIntroFinished = false;
-let currentHelloWord = 'Hello!';
+let currentHelloWord = 'Привет!';
 let finishHelloIntro = null;
 
 function startHelloIntro(onComplete) {
@@ -164,6 +295,10 @@ function startHelloIntro(onComplete) {
     if (finished) return;
     finished = true;
     helloIntroFinished = true;
+
+    if (!document.hidden && titleTypewriter) {
+      titleTypewriter.to('загрузка...', { typeSpeed: 28, eraseSpeed: 14, pause: 20 });
+    }
 
     function triggerBoom() {
       if (animId) cancelAnimationFrame(animId);
@@ -245,6 +380,14 @@ function startHelloIntro(onComplete) {
     const item = HELLO_WORDS[index];
     currentHelloWord = item.text;
     textEl.textContent = item.text;
+
+    // Real-time title typewriter: backspace & type current greeting
+    if (!document.hidden && window.titleTypewriter) {
+      const charCount = Math.max(1, item.text.length);
+      const tSpeed = Math.max(14, Math.floor((item.dur * 0.55) / charCount));
+      const eSpeed = Math.max(10, Math.floor(tSpeed * 0.55));
+      window.titleTypewriter.to(item.text, { typeSpeed: tSpeed, eraseSpeed: eSpeed, pause: 20 });
+    }
 
     // Kinetic entry animation using Web Animations API (native & 60/120fps on mobile)
     if (typeof textEl.animate === 'function') {
@@ -405,14 +548,13 @@ function ensureAudioCtx() {
   return audioCtx;
 }
 
-// ── Lo-Fi Background Player (ON by default, 30% volume) ──
-// ── Lo-Fi Background Player (ON by default, 30% volume) ──
+// ── Lo-Fi Background Player (ON by default, 5% volume) ──
 const lofiAudio = document.getElementById('lofi-audio') || new Audio('lofi.mp3');
 lofiAudio.loop = true;
 lofiAudio.preload = 'auto';
 window.lofiAudio = lofiAudio;
 
-let lofiVolume = 0.30;
+let lofiVolume = 0.05;
 lofiAudio.volume = lofiVolume;
 let lofiPlaying = true;
 let userInteracted = false;
@@ -845,6 +987,11 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
     // Play signature pat-pat sound
     playPatSound();
 
+    // Subtle tactile haptic click on mobile
+    if (navigator.vibrate && userInteracted) {
+      try { navigator.vibrate(15); } catch (_) {}
+    }
+
     // Momentary playful spin boost on pat
     patSpinBoost = 0.22;
 
@@ -867,7 +1014,18 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
     }
   }
 
+  function dismissMobileHint() {
+    const hint = document.getElementById('mobile-tap-hint');
+    if (hint && !hint.classList.contains('dismissed')) {
+      hint.classList.add('dismissed');
+    }
+  }
+
   function startPatting(clientX, clientY) {
+    if (window.getSelection) {
+      window.getSelection().removeAllRanges();
+    }
+    dismissMobileHint();
     tryUnlockAudio();
     if (!modelGroup || !camera) return;
 
@@ -916,6 +1074,14 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
       }, remainingStroke + 50);
     }
   }
+
+  // ── Mobile Swipe-to-Spin & Double-tap Interaction State ──
+  let catManualRotY = 0;
+  let catSwipeSpinVelocity = 0;
+  let touchStartX = 0;
+  let touchLastX = 0;
+  let touchStartY = 0;
+  let lastTouchTapTime = 0;
 
   window.addEventListener('mousemove', e => {
     mouseClientX = e.clientX;
@@ -972,10 +1138,31 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
   });
   window.addEventListener('mouseup', stopPatting);
 
-  // Hold-to-pat & tap on mobile
+  // Hold-to-pat, swipe-to-spin & double-tap on mobile
   window.addEventListener('touchstart', e => {
+    if (window.getSelection) {
+      window.getSelection().removeAllRanges();
+    }
+    dismissMobileHint();
+
     if (e.touches && e.touches[0]) {
       const touch = e.touches[0];
+      touchStartX = touch.clientX;
+      touchLastX = touch.clientX;
+      touchStartY = touch.clientY;
+
+      // Double-tap easter egg to rebuild 3D cat polygon matrix
+      const now = performance.now();
+      if (now - lastTouchTapTime < 340) {
+        if (typeof startNic0Reveal === 'function') {
+          startNic0Reveal();
+          if (navigator.vibrate) {
+            try { navigator.vibrate([15, 35, 15]); } catch (_) {}
+          }
+        }
+      }
+      lastTouchTapTime = now;
+
       if (e.target && e.target.closest('a, button, input, .lofi-control, .scheme-bar')) return;
       mx = (touch.clientX / window.innerWidth - 0.5) * 2;
       my = (touch.clientY / window.innerHeight - 0.5) * 2;
@@ -986,10 +1173,28 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
   window.addEventListener('touchend', stopPatting);
   window.addEventListener('touchcancel', stopPatting);
 
+  // Prevent mobile long-press context menu & selection bubble on 3D canvas / hero
+  window.addEventListener('contextmenu', e => {
+    if (e.target && (e.target.id === 'gl' || e.target.closest('.hero-bg') || e.target.closest('.hero') || e.target.closest('.petpet-hand'))) {
+      e.preventDefault();
+    }
+  });
+
   window.addEventListener('touchmove', e => {
     if (e.touches && e.touches[0]) {
-      mx = (e.touches[0].clientX / window.innerWidth - 0.5) * 2;
-      my = (e.touches[0].clientY / window.innerHeight - 0.5) * 2;
+      const touch = e.touches[0];
+      mx = (touch.clientX / window.innerWidth - 0.5) * 2;
+      my = (touch.clientY / window.innerHeight - 0.5) * 2;
+
+      const dx = touch.clientX - touchLastX;
+      const dy = touch.clientY - touchStartY;
+      touchLastX = touch.clientX;
+
+      // Swipe horizontally to spin cat with inertia
+      if (Math.abs(touch.clientX - touchStartX) > 8 && Math.abs(dx) > Math.abs(dy) * 0.45) {
+        catSwipeSpinVelocity += dx * 0.007;
+        catSwipeSpinVelocity = Math.max(-0.24, Math.min(0.24, catSwipeSpinVelocity));
+      }
     }
   }, { passive: true });
 
@@ -1128,6 +1333,10 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
     contactMat.opacity = 0;
     gndMat.opacity = 0;
 
+    if (!document.hidden && window.titleTypewriter) {
+      window.titleTypewriter.to('загрузка...', { typeSpeed: 32, eraseSpeed: 16, pause: 20 });
+    }
+
     if (activeAction) {
       activeAction.time = 1.083;
       activeAction.paused = true;
@@ -1219,6 +1428,10 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
         }
 
         loaderState = 'done';
+        window.__isSiteLoaded = true;
+        if (!document.hidden && window.titleTypewriter) {
+          window.titleTypewriter.to(window.MAIN_TITLE || 'малинка  —  сын шл...', { typeSpeed: 36, eraseSpeed: 18, pause: 30 });
+        }
       }
       return;
     }
@@ -1458,9 +1671,27 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
   let dancePhase = 0, phaseTimer = 0;
   const PHASE_DUR = 3.5;
 
+  // Battery saver observer: pause Three.js rendering when hero is scrolled out of view
+  let isHeroVisible = true;
+  if (typeof IntersectionObserver !== 'undefined') {
+    const heroEl = document.getElementById('hero');
+    if (heroEl) {
+      const heroObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          isHeroVisible = entry.isIntersecting;
+        });
+      }, { threshold: [0, 0.02] });
+      heroObserver.observe(heroEl);
+    }
+  }
+
   function animate() {
     requestAnimationFrame(animate);
-    const dt = clock.getDelta(); // Must be called BEFORE getElapsedTime
+
+    // Battery saver: skip rendering when user has scrolled down into works
+    if (!isHeroVisible) return;
+
+    const dt = Math.min(clock.getDelta(), 0.1); // Must be called BEFORE getElapsedTime
     const t = clock.getElapsedTime();
 
     // 1:1 nic0martins appearance reveal
@@ -1539,8 +1770,12 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
       updatePetHandPosition();
     }
 
-    // Upright rotation: no tilt
-    modelGroup.rotation.set(0, 0, 0);
+    // Upright rotation with swipe-to-spin angular momentum
+    catManualRotY += catSwipeSpinVelocity;
+    catSwipeSpinVelocity *= 0.93;
+    if (Math.abs(catSwipeSpinVelocity) < 0.0001) catSwipeSpinVelocity = 0;
+
+    modelGroup.rotation.set(0, catManualRotY, 0);
 
     // ── GLB MODEL DANCE ──
     if (modelGroup.userData.isGLB) {
@@ -1733,19 +1968,26 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
 /* ──────────────────────────────────────────
    DYNAMIC PAGE TITLE & CONSOLE EASTER EGG
    ────────────────────────────────────────── */
-const ORIG_TITLE = "Malinka  —  сын шл...";
-const AWAY_TITLE = "куда ушел, вернись...";
-
 document.addEventListener('visibilitychange', () => {
-  document.title = document.hidden ? AWAY_TITLE : ORIG_TITLE;
+  if (document.hidden) {
+    window.titleTypewriter?.to(window.AWAY_TITLE || 'куда ушел, вернись...', { typeSpeed: 30, eraseSpeed: 16, pause: 20 });
+  } else {
+    const returnTarget = window.__isSiteLoaded
+      ? (window.MAIN_TITLE || 'малинка  —  сын шл...')
+      : (helloIntroFinished ? 'загрузка...' : currentHelloWord);
+    window.titleTypewriter?.to(returnTarget, { typeSpeed: 30, eraseSpeed: 16, pause: 20 });
+  }
 });
 
 window.addEventListener('blur', () => {
-  document.title = AWAY_TITLE;
+  window.titleTypewriter?.to(window.AWAY_TITLE || 'куда ушел, вернись...', { typeSpeed: 30, eraseSpeed: 16, pause: 20 });
 });
 
 window.addEventListener('focus', () => {
-  document.title = ORIG_TITLE;
+  const returnTarget = window.__isSiteLoaded
+    ? (window.MAIN_TITLE || 'малинка  —  сын шл...')
+    : (helloIntroFinished ? 'загрузка...' : currentHelloWord);
+    window.titleTypewriter?.to(returnTarget, { typeSpeed: 30, eraseSpeed: 16, pause: 20 });
 });
 
 console.log("че ты пялишь? код на гитхабе)");

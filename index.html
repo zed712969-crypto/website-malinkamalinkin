@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>малинка  —  сын шл...</title>
+  <title>&lrm;</title>
   <meta name="description" content="малинка — сын шл..." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@700;800;900&family=Geist+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐱</text></svg>" />
-  <link rel="stylesheet" href="style.css?v=2.1" />
+  <link rel="stylesheet" href="style.css?v=2.8" />
 </head>
 <body>
 
@@ -21,7 +21,7 @@
   <!-- iPhone Setup "Hello" Multilingual Intro Overlay -->
   <div id="hello-intro" class="hello-intro" aria-hidden="true">
     <div class="hello-wrap">
-      <span class="hello-text text-display" id="hello-text">Hello!</span>
+      <span class="hello-text text-display" id="hello-text">Привет!</span>
     </div>
   </div>
 
@@ -40,6 +40,12 @@
 
       <!-- Floating cursor badge on model hover -->
       <div class="cursor-badge" id="cursor-badge">CLICK ME</div>
+
+      <!-- Floating Mobile Tap Hint (Apple Liquid Glass) -->
+      <div class="mobile-tap-hint" id="mobile-tap-hint" aria-hidden="true">
+        <span class="hint-dot"></span>
+        <span class="hint-text">CLICK ME</span>
+      </div>
 
       <!-- Petpet Meme Hand Overlay -->
       <img src="pet_hand.gif" id="pet-hand" class="petpet-hand" alt="Petting hand" />
@@ -103,8 +109,8 @@
           <div class="lofi-control chip">
             <button type="button" class="lofi-toggle text-micro chip-link active" id="btn-lofi" aria-pressed="true" aria-label="Toggle Lo-Fi">LOFI ⏸</button>
             <div class="vol-slider-wrap">
-              <input type="range" class="lofi-volume-slider" id="lofi-volume" min="0" max="100" value="30" step="1" aria-label="Lo-Fi Volume" />
-              <span class="vol-val text-micro" id="vol-val">30%</span>
+              <input type="range" class="lofi-volume-slider" id="lofi-volume" min="0" max="100" value="5" step="1" aria-label="Lo-Fi Volume" />
+              <span class="vol-val text-micro" id="vol-val">5%</span>
             </div>
           </div>
         </span>
@@ -162,6 +168,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
-  <script src="app.js?v=2.1"></script>
+  <script src="app.js?v=3.0"></script>
 </body>
 </html>
