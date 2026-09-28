@@ -22,8 +22,8 @@ button { font: inherit; border: none; background: none; cursor: pointer; color: 
    TOKENS
    ════════════════════════════════════════════ */
 :root {
-  --display: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --sans: 'Plus Jakarta Sans', -apple-system, system-ui, sans-serif;
+  --display: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
 
   /* Hero — light (white bg, dark text) */
@@ -69,9 +69,9 @@ body {
 .text-display {
   font-family: var(--display);
   font-weight: 800;
-  font-size: clamp(2.6rem, 7.8vw, 7.5rem);
-  line-height: 0.9;
-  letter-spacing: -0.04em;
+  font-size: clamp(2.4rem, 7.2vw, 6.8rem);
+  line-height: 0.98;
+  letter-spacing: -0.025em;
   color: var(--h-ink);
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
@@ -80,10 +80,10 @@ body {
 }
 
 .text-micro {
-  font-family: var(--mono);
-  font-size: clamp(0.5rem, 0.65vw, 0.68rem);
-  font-weight: 500;
-  letter-spacing: 0.06em;
+  font-family: var(--sans);
+  font-size: clamp(0.56rem, 0.72vw, 0.74rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
@@ -100,11 +100,11 @@ body {
   display: inline-block;
   white-space: nowrap;
   padding: 4px 8px;
-  font-family: var(--mono);
-  font-size: clamp(0.62rem, 0.85vw, 0.82rem);
+  font-family: var(--sans);
+  font-size: clamp(0.72rem, 0.9vw, 0.88rem);
   font-weight: 500;
-  letter-spacing: 0.015em;
-  line-height: 1.45;
+  letter-spacing: -0.018em;
+  line-height: 1.35;
   background: var(--h-chip);
   color: var(--h-ink);
   transition: background 0.18s ease, color 0.18s ease;
@@ -125,14 +125,23 @@ body {
 .chip-link:hover,
 .chip-link:focus-visible { background: var(--h-chip-h); }
 
+.chip:has(.chip-link:hover) {
+  background: var(--h-chip-h);
+}
+
+.chip .chip-link {
+  background: transparent;
+}
+
 .chip-solid {
   display: inline-block;
   white-space: nowrap;
   padding: 4px 8px;
-  font-family: var(--mono);
-  font-size: clamp(0.62rem, 0.85vw, 0.82rem);
-  font-weight: 700;
-  letter-spacing: 0.015em;
+  font-family: var(--sans);
+  font-size: clamp(0.72rem, 0.9vw, 0.88rem);
+  font-weight: 600;
+  letter-spacing: -0.018em;
+  line-height: 1.35;
   background: var(--w-ink);
   color: var(--w-bg);
   -webkit-tap-highlight-color: transparent;
@@ -149,6 +158,20 @@ body {
   transition: text-decoration-thickness 0.15s;
 }
 .mention:hover { text-decoration-thickness: 2px; }
+
+.email-link {
+  color: var(--h-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: color 0.15s ease, text-decoration-thickness 0.15s ease;
+}
+.email-link:hover {
+  color: var(--h-accent);
+  text-decoration-thickness: 2px;
+}
 
 /* Scramble character styling */
 .scr { color: var(--h-accent); opacity: 0.5; }
@@ -242,6 +265,7 @@ body {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
+  touch-action: pan-y;
 }
 
 .hero-bg {
@@ -255,7 +279,7 @@ body {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
-  touch-action: none;
+  touch-action: pan-y;
 }
 
 .hero-bg.visible {
@@ -270,7 +294,7 @@ body {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
-  touch-action: none;
+  touch-action: pan-y;
   outline: none;
 }
 
@@ -316,12 +340,62 @@ body {
 }
 
 .scroll-hint {
-  animation: hintPulse 2.5s ease-in-out infinite;
+  animation: scrollFlicker5s 5s ease-in-out infinite;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, color 0.2s ease;
 }
 
-@keyframes hintPulse {
-  0%, 100% { opacity: 0.4; }
-  50%      { opacity: 1; }
+@keyframes scrollFlicker5s {
+  0%, 88% {
+    opacity: 0.85;
+    transform: translateY(0) scale(1);
+    box-shadow: none;
+    text-shadow: none;
+    filter: none;
+  }
+  89% {
+    opacity: 0.2;
+    transform: translateY(-2px) skewX(-2deg);
+    background: var(--h-chip-h);
+    text-shadow: -1.5px 0 #1337ff;
+  }
+  91% {
+    opacity: 1;
+    transform: translateY(2px) skewX(2deg);
+    background: #1a1a1a;
+    color: #ffffff;
+    box-shadow: 0 0 14px rgba(19, 55, 255, 0.55);
+    text-shadow: 1.5px 0 #1337ff, -1.5px 0 #ff0055;
+  }
+  93% {
+    opacity: 0.15;
+    transform: translateY(-0.5px);
+    background: var(--h-chip);
+    color: var(--h-ink);
+    box-shadow: none;
+    text-shadow: none;
+  }
+  95% {
+    opacity: 1;
+    transform: translateY(1px) skewX(-1deg);
+    background: #1337ff;
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(19, 55, 255, 0.65);
+    text-shadow: 1px 0 #ffffff;
+  }
+  97% {
+    opacity: 0.55;
+    transform: translateY(0);
+    filter: none;
+    box-shadow: none;
+    text-shadow: none;
+  }
+  100% {
+    opacity: 0.85;
+    transform: translateY(0) scale(1);
+    box-shadow: none;
+    text-shadow: none;
+    filter: none;
+  }
 }
 
 /* ═══════════════════════════════════════════
@@ -362,101 +436,6 @@ body {
   justify-content: flex-end;
   gap: 6px;
   max-width: calc(100vw - 24px);
-}
-
-/* Lo-Fi Player & Volume Control */
-.lofi-control {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 10px;
-  background: var(--w-chip);
-  color: var(--w-ink);
-  transition: background 0.18s ease, color 0.18s ease;
-  user-select: none;
-}
-
-.lofi-toggle {
-  background: none;
-  border: none;
-  color: inherit;
-  font-family: var(--mono);
-  font-size: clamp(0.62rem, 0.85vw, 0.82rem);
-  font-weight: 700;
-  cursor: pointer;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  outline: none;
-  white-space: nowrap;
-}
-
-.lofi-toggle:hover {
-  opacity: 0.8;
-}
-
-.vol-slider-wrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.lofi-volume-slider {
-  -webkit-appearance: none;
-  appearance: none;
-  width: clamp(52px, 6vw, 76px);
-  height: 4px;
-  background: color-mix(in srgb, var(--w-ink) 25%, transparent);
-  border-radius: 2px;
-  outline: none;
-  cursor: pointer;
-  transition: background 0.15s;
-  padding: 0;
-  margin: 0;
-}
-
-.lofi-volume-slider:hover {
-  background: color-mix(in srgb, var(--w-ink) 45%, transparent);
-}
-
-.lofi-volume-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--w-ink);
-  cursor: pointer;
-  transition: transform 0.1s ease;
-}
-
-.lofi-volume-slider::-webkit-slider-thumb:hover,
-.lofi-volume-slider:active::-webkit-slider-thumb {
-  transform: scale(1.35);
-}
-
-.lofi-volume-slider::-moz-range-thumb {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: none;
-  background: var(--w-ink);
-  cursor: pointer;
-  transition: transform 0.1s ease;
-}
-
-.lofi-volume-slider::-moz-range-thumb:hover,
-.lofi-volume-slider:active::-moz-range-thumb {
-  transform: scale(1.35);
-}
-
-.vol-val {
-  font-family: var(--mono);
-  font-size: clamp(0.56rem, 0.72vw, 0.72rem);
-  min-width: 26px;
-  text-align: right;
-  opacity: 0.85;
 }
 
 .sw {
@@ -551,10 +530,10 @@ body {
     color: #111116;
     backdrop-filter: blur(28px) saturate(190%);
     -webkit-backdrop-filter: blur(28px) saturate(190%);
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
+    font-weight: 600;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     border-radius: 999px;
     
@@ -778,15 +757,6 @@ body {
     height: 20px;
   }
 
-  .lofi-control {
-    padding: 3px 8px;
-    gap: 6px;
-  }
-
-  .lofi-volume-slider {
-    width: 44px;
-  }
-
   .works-grid {
     display: flex;
     flex-direction: column;
@@ -856,10 +826,10 @@ html { scrollbar-width: none; }
   padding: 5px 11px;
   background: #121216;
   color: #f5f5f7;
-  font-family: var(--mono);
+  font-family: var(--sans);
   font-size: clamp(0.56rem, 0.72vw, 0.72rem);
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.12);

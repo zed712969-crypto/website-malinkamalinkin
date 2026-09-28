@@ -8,15 +8,12 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@700;800;900&family=Geist+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐱</text></svg>" />
-  <link rel="stylesheet" href="style.css?v=2.8" />
+  <link rel="stylesheet" href="style.css?v=3.6" />
 </head>
 <body>
-
-  <!-- Background Lo-Fi Player (Preloaded & Autoplay) -->
-  <audio id="lofi-audio" src="lofi.mp3" loop preload="auto" autoplay playsinline></audio>
 
   <!-- iPhone Setup "Hello" Multilingual Intro Overlay -->
   <div id="hello-intro" class="hello-intro" aria-hidden="true">
@@ -67,12 +64,12 @@
         <!-- MIDDLE: info (left) + details (right) -->
         <div class="row row-mid">
           <ul class="col col-left gap-1">
-            <li><span data-enter="5"><span class="chip" data-scramble>Open-source at <a href="https://github.com/" target="_blank" rel="noopener noreferrer" class="mention">@GitHub</a></span></span></li>
-            <li><span data-enter="7"><span class="chip" data-scramble>Community <a href="https://windhawk.net/" target="_blank" rel="noopener noreferrer" class="mention">@Windhawk</a></span></span></li>
+            <li><span data-enter="5"><span class="chip">Design at <a href="mailto:hello@malinka.space" class="chip-link mention email-link" data-scramble>hello@malinka.space</a></span></span></li>
+            <li><span data-enter="7"><span class="chip">Community <a href="https://windhawk.net/" target="_blank" rel="noopener noreferrer" class="chip-link mention" data-scramble>@Windhawk</a></span></span></li>
           </ul>
           <ul class="col col-right gap-1 self-end">
             <li><span data-enter="6"><span class="chip" data-scramble>Penza, Russia. 16yo</span></span></li>
-            <li><span data-enter="8"><span class="chip" data-scramble>Work for coffe</span></span></li>
+            <li><span data-enter="8"><span class="chip" data-scramble>Work for coffee</span></span></li>
           </ul>
         </div>
 
@@ -102,19 +99,10 @@
          ═══════════════════════════════════════ -->
     <section class="works" id="works">
 
-      <!-- Color scheme switcher + sound toggle + lofi volume -->
+      <!-- Color scheme switcher + sound toggle -->
       <div class="scheme-bar">
         <span data-enter-works="0"><button type="button" aria-pressed="true" class="chip chip-link text-micro" id="btn-sound" data-scramble>SOUND ON</button></span>
-        <span data-enter-works="1">
-          <div class="lofi-control chip">
-            <button type="button" class="lofi-toggle text-micro chip-link active" id="btn-lofi" aria-pressed="true" aria-label="Toggle Lo-Fi">LOFI ⏸</button>
-            <div class="vol-slider-wrap">
-              <input type="range" class="lofi-volume-slider" id="lofi-volume" min="0" max="100" value="5" step="1" aria-label="Lo-Fi Volume" />
-              <span class="vol-val text-micro" id="vol-val">5%</span>
-            </div>
-          </div>
-        </span>
-        <span data-enter-works="2" class="scheme-swatches-wrap" style="display:inline-flex;gap:4px;">
+        <span data-enter-works="1" class="scheme-swatches-wrap" style="display:inline-flex;gap:4px;">
           <button type="button" class="sw active" data-scheme="0" aria-label="Blue"        style="--sb:#1337ff;--sd:#e6e6e6"></button>
           <button type="button" class="sw"        data-scheme="1" aria-label="Light blue"   style="--sb:#d9d9d9;--sd:#1337ff"></button>
           <button type="button" class="sw"        data-scheme="2" aria-label="Red"          style="--sb:#ff1337;--sd:#e6e6e6"></button>
@@ -168,6 +156,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
-  <script src="app.js?v=3.0"></script>
+  <script src="app.js?v=3.8"></script>
 </body>
 </html>

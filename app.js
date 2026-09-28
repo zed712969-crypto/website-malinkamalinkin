@@ -533,14 +533,11 @@ function applyScheme(idx) {
 swatches.forEach((sw, i) => sw.addEventListener('click', () => applyScheme(i)));
 
 /* ──────────────────────────────────────────
-   3. SOUND & LO-FI MUSIC
+   3. SOUND EFFECTS (SFX)
    ────────────────────────────────────────── */
 const btnSound = document.getElementById('btn-sound');
-const btnLofi = document.getElementById('btn-lofi');
-const lofiVolumeInput = document.getElementById('lofi-volume');
-const volValEl = document.getElementById('vol-val');
 
-let soundOn = true, audioCtx = null;
+let soundOn = true, audioCtx = null, userInteracted = false;
 
 function ensureAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -548,130 +545,31 @@ function ensureAudioCtx() {
   return audioCtx;
 }
 
-// ── Lo-Fi Background Player (ON by default, 5% volume) ──
-const lofiAudio = document.getElementById('lofi-audio') || new Audio('lofi.mp3');
-lofiAudio.loop = true;
-lofiAudio.preload = 'auto';
-window.lofiAudio = lofiAudio;
-
-let lofiVolume = 0.05;
-lofiAudio.volume = lofiVolume;
-let lofiPlaying = true;
-let userInteracted = false;
-
-function updateLofiUI() {
-  if (btnLofi) {
-    btnLofi.textContent = lofiPlaying ? 'LOFI ⏸' : 'LOFI ▶';
-    btnLofi.classList.toggle('active', lofiPlaying);
-    btnLofi.setAttribute('aria-pressed', lofiPlaying ? 'true' : 'false');
-  }
-  if (volValEl && lofiVolumeInput) {
-    volValEl.textContent = `${Math.round(lofiVolumeInput.value)}%`;
-  }
-}
-
-function startLofi() {
-  if (!soundOn) return;
-  lofiAudio.volume = lofiVolume;
-  lofiPlaying = true;
-  updateLofiUI();
-  const playPromise = lofiAudio.play();
-  if (playPromise !== undefined) {
-    playPromise.then(() => {
-      detachUnlockListeners();
-    }).catch(() => {
-      // Browser autoplay policy requires user interaction first.
-      // Unlock listeners will fire on first user touch/click/key/hover.
-    });
-  }
-}
-
-function pauseLofi() {
-  lofiAudio.pause();
-  lofiPlaying = false;
-  updateLofiUI();
-}
-
-function toggleLofi() {
-  if (lofiPlaying) {
-    pauseLofi();
-  } else {
-    if (!soundOn) {
-      soundOn = true;
-      btnSound.textContent = 'SOUND ON';
-    }
-    startLofi();
-  }
-}
-
-// Attempt immediate playback as early as possible
-startLofi();
-window.addEventListener('load', startLofi);
-document.addEventListener('DOMContentLoaded', startLofi);
-
-if (btnLofi) {
-  btnLofi.addEventListener('click', () => {
-    btnClick();
-    toggleLofi();
-  });
-}
-
-if (lofiVolumeInput) {
-  lofiVolumeInput.addEventListener('input', (e) => {
-    const val = parseFloat(e.target.value);
-    lofiVolume = val / 100;
-    lofiAudio.volume = lofiVolume;
-    updateLofiUI();
-    if (val > 0 && !lofiPlaying && soundOn) {
-      startLofi();
-    } else if (val === 0 && lofiPlaying) {
-      pauseLofi();
+if (btnSound) {
+  btnSound.addEventListener('click', () => {
+    soundOn = !soundOn;
+    btnSound.textContent = soundOn ? 'SOUND ON' : 'SOUND OFF';
+    btnSound.setAttribute('aria-pressed', soundOn ? 'true' : 'false');
+    if (soundOn) {
+      btnClick();
     }
   });
 }
 
-btnSound.addEventListener('click', () => {
-  soundOn = !soundOn;
-  btnSound.textContent = soundOn ? 'SOUND ON' : 'SOUND OFF';
-  if (soundOn) {
-    btnClick();
-    if (lofiVolume > 0) startLofi();
-  } else {
-    pauseLofi();
-  }
-});
-
-// Comprehensive zero-latency unlock handlers
+// Zero-latency audio unlock on first user interaction
 const UNLOCK_EVENTS = [
   'click', 'pointerdown', 'mousedown', 'mouseup',
-  'touchstart', 'touchend', 'keydown',
-  'wheel', 'scroll'
+  'touchstart', 'touchend', 'keydown'
 ];
 
 function tryUnlockAudio() {
+  userInteracted = true;
   ensureAudioCtx();
-  if (soundOn && lofiPlaying && lofiAudio.paused) {
-    startLofi();
-  }
 }
 
-function attachUnlockListeners() {
-  UNLOCK_EVENTS.forEach(ev => {
-    window.addEventListener(ev, tryUnlockAudio, { passive: true });
-    document.addEventListener(ev, tryUnlockAudio, { passive: true });
-  });
-}
-
-function detachUnlockListeners() {
-  if (!lofiAudio.paused) {
-    UNLOCK_EVENTS.forEach(ev => {
-      window.removeEventListener(ev, tryUnlockAudio);
-      document.removeEventListener(ev, tryUnlockAudio);
-    });
-  }
-}
-
-attachUnlockListeners();
+UNLOCK_EVENTS.forEach(ev => {
+  window.addEventListener(ev, tryUnlockAudio, { passive: true, once: true });
+});
 
 // Crisp, audible UI hover tick (louder: 0.09 instead of 0.02)
 function tick() {
@@ -713,7 +611,9 @@ function btnClick() {
 // Glitch scramble effect on button hover
 function attachHoverScramble(el) {
   const target = el.querySelector('[data-scramble]') || (el.hasAttribute('data-scramble') ? el : null) || el;
-  const originalHTML = target.innerHTML;
+  if (!target) return;
+  const originalHTML = target.getAttribute('data-original-html') || target.innerHTML;
+  target.setAttribute('data-original-html', originalHTML);
   const originalText = target.textContent.trim();
   if (!originalText || target.querySelector('input')) return;
 
@@ -731,7 +631,7 @@ function attachHoverScramble(el) {
       frame++;
       if (frame >= totalFrames) {
         clearInterval(timer);
-        target.innerHTML = originalHTML;
+        target.innerHTML = target.getAttribute('data-original-html') || originalHTML;
         isScrambling = false;
       } else {
         let str = '';
@@ -741,7 +641,8 @@ function attachHoverScramble(el) {
             str += ch;
           } else if (Math.random() < 0.35) {
             const rc = SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
-            str += `<span class="scr">${rc}</span>`;
+            const safeRc = rc === '<' ? '&lt;' : (rc === '>' ? '&gt;' : rc);
+            str += `<span class="scr">${safeRc}</span>`;
           } else {
             str += ch;
           }
@@ -753,13 +654,15 @@ function attachHoverScramble(el) {
 
   el.addEventListener('mouseleave', () => {
     clearInterval(timer);
-    target.innerHTML = originalHTML;
+    target.innerHTML = target.getAttribute('data-original-html') || originalHTML;
     isScrambling = false;
   });
 }
 
-// Attach hover, click feedback and scramble glitch to all buttons and chips
-const interactiveButtons = document.querySelectorAll('.chip-link, .sw, #btn-scroll, #btn-sound, .scroll-hint, .lofi-toggle');
+// Attach hover, click feedback and scramble glitch to all interactive chips, links, email and windhawk
+const interactiveButtons = document.querySelectorAll(
+  '.chip-link, .sw, #btn-scroll, #btn-sound, .scroll-hint, .email-link, a[href*="windhawk"], [data-scramble]'
+);
 interactiveButtons.forEach(el => {
   el.addEventListener('mouseenter', tick);
   el.addEventListener('click', btnClick);
@@ -767,12 +670,42 @@ interactiveButtons.forEach(el => {
 });
 
 /* ──────────────────────────────────────────
-   4. SCROLL HINT
+   4. SCROLL HINT (CLICK & 5S PERIODIC FLICKER)
    ────────────────────────────────────────── */
-document.getElementById('btn-scroll')?.addEventListener('click', () => {
-  worksEl.scrollIntoView({ behavior: 'smooth' });
-  setTimeout(runWorksEntranceAnimations, 250);
-});
+const btnScroll = document.getElementById('btn-scroll');
+if (btnScroll) {
+  btnScroll.addEventListener('click', () => {
+    worksEl.scrollIntoView({ behavior: 'smooth' });
+    setTimeout(runWorksEntranceAnimations, 250);
+  });
+
+  // Every 5 seconds, trigger a cyber glitch scramble on "SCROLL DOWN"
+  setInterval(() => {
+    if (window.scrollY < 120) {
+      let frame = 0;
+      const totalFrames = 8;
+      const targetText = 'SCROLL DOWN';
+      const timer = setInterval(() => {
+        frame++;
+        if (frame >= totalFrames) {
+          clearInterval(timer);
+          btnScroll.textContent = targetText;
+        } else {
+          let s = '';
+          for (let i = 0; i < targetText.length; i++) {
+            if (targetText[i] === ' ') s += ' ';
+            else if (Math.random() < 0.45) {
+              s += SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+            } else {
+              s += targetText[i];
+            }
+          }
+          btnScroll.textContent = s;
+        }
+      }, 28);
+    }
+  }, 5000);
+}
 
 /* ──────────────────────────────────────────
    5. THREE.JS — SKIPPER (GLB MODEL + FALLBACK)
@@ -790,6 +723,8 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
   let patVelocity = 0;
   let isPatHolding = false;
   let patInterval = null;
+  let patHoldTimeout = null;
+  let lastTouchEndTime = 0;
   let handHideTimeout = null;
   let lastPatTime = 0;
   let modelGroup = null;
@@ -981,8 +916,8 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
   function doPat() {
     lastPatTime = performance.now();
 
-    // Add squish downward velocity impulse
-    patVelocity += 2.8;
+    // Add squish downward velocity impulse (clamped to prevent physics explosion on rapid tap spam)
+    patVelocity = Math.min(4.0, patVelocity + 2.4);
 
     // Play signature pat-pat sound
     playPatSound();
@@ -998,19 +933,19 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
     // Ensure hand is positioned directly on the cat head before activating
     updatePetHandPosition();
 
-    // Show and maintain meme petting hand smoothly
+    // Show and maintain meme petting hand smoothly (exact 1 GIF cycle = 200ms)
     if (petHandEl) {
       clearTimeout(handHideTimeout);
       if (!petHandEl.classList.contains('active')) {
-        petHandEl.src = 'pet_hand.gif?t=' + Date.now();
-        petHandEl.classList.add('active');
+        petHandEl.src = 'pet_hand.gif';
       }
-      // Keep hand active for at least one full stroke
+      petHandEl.classList.add('active');
+
       handHideTimeout = setTimeout(() => {
         if (!isPatHolding && petHandEl) {
           petHandEl.classList.remove('active');
         }
-      }, 260);
+      }, 220);
     }
   }
 
@@ -1037,51 +972,59 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
     raycaster.setFromCamera(pointer, camera);
     const hits = raycaster.intersectObjects(modelGroup.children, true);
 
-    if (hits.length > 0 || distToHead < HEAD_MAGNETIC_RADIUS) {
+    const isMobile = window.innerWidth <= 768;
+    const hitRadius = isMobile ? 120 : HEAD_MAGNETIC_RADIUS;
+
+    if (hits.length > 0 || distToHead < hitRadius) {
       loadPatBuffer();
       isPatHolding = true;
-      doPat();
+      doPat(); // Single crisp pat for tap
 
-      // Continuous rapid patting if held down (200ms per pat matches GIF loop & Tuna tempo)
+      // Continuous rapid patting ONLY if user actually holds down (> 280ms)
+      clearTimeout(patHoldTimeout);
       clearInterval(patInterval);
-      patInterval = setInterval(() => {
+      patHoldTimeout = setTimeout(() => {
         if (isPatHolding) {
-          doPat();
-        } else {
-          clearInterval(patInterval);
-          patInterval = null;
+          patInterval = setInterval(() => {
+            if (isPatHolding) {
+              doPat();
+            } else {
+              clearInterval(patInterval);
+              patInterval = null;
+            }
+          }, 200);
         }
-      }, 200);
+      }, 280);
     }
   }
 
   function stopPatting() {
-    if (!isPatHolding && !patInterval) return;
     isPatHolding = false;
+    clearTimeout(patHoldTimeout);
+    patHoldTimeout = null;
     if (patInterval) {
       clearInterval(patInterval);
       patInterval = null;
     }
     if (petHandEl) {
       clearTimeout(handHideTimeout);
-      // Ensure the hand finishes its current stroke so it never abruptly cuts off!
       const elapsed = performance.now() - lastPatTime;
-      const remainingStroke = Math.max(0, 200 - elapsed);
+      const remainingStroke = Math.max(0, 200 - (elapsed % 200));
       handHideTimeout = setTimeout(() => {
         if (!isPatHolding && petHandEl) {
           petHandEl.classList.remove('active');
         }
-      }, remainingStroke + 50);
+      }, Math.min(remainingStroke, 200));
     }
   }
 
-  // ── Mobile Swipe-to-Spin & Double-tap Interaction State ──
+  // ── Mobile Swipe-to-Spin & Interaction State ──
   let catManualRotY = 0;
   let catSwipeSpinVelocity = 0;
   let touchStartX = 0;
   let touchLastX = 0;
   let touchStartY = 0;
-  let lastTouchTapTime = 0;
+  let isSwipingVertically = false;
 
   window.addEventListener('mousemove', e => {
     mouseClientX = e.clientX;
@@ -1108,7 +1051,11 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
           cursorBadge.style.left = `${e.clientX}px`;
           cursorBadge.style.top = `${e.clientY}px`;
           cursorBadge.textContent = 'CLICK ME';
-          cursorBadge.classList.add('visible');
+          if (!isPatHolding) {
+            cursorBadge.classList.add('visible');
+          } else {
+            cursorBadge.classList.remove('visible');
+          }
         }
       } else {
         if (!isPatHolding) {
@@ -1133,12 +1080,17 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
 
   // Hold-to-pat & click on desktop
   window.addEventListener('mousedown', e => {
-    if (e.target && e.target.closest('a, button, input, .lofi-control, .scheme-bar')) return;
+    // Ignore synthetic mouse events fired right after touch
+    if (performance.now() - lastTouchEndTime < 650) return;
+    if (e.target && e.target.closest && e.target.closest('a, button, input, .scheme-bar')) return;
     startPatting(e.clientX, e.clientY);
   });
-  window.addEventListener('mouseup', stopPatting);
+  window.addEventListener('mouseup', () => {
+    if (performance.now() - lastTouchEndTime < 650) return;
+    stopPatting();
+  });
 
-  // Hold-to-pat, swipe-to-spin & double-tap on mobile
+  // Hold-to-pat & swipe-to-spin / swipe-to-scroll on mobile
   window.addEventListener('touchstart', e => {
     if (window.getSelection) {
       window.getSelection().removeAllRanges();
@@ -1150,32 +1102,37 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
       touchStartX = touch.clientX;
       touchLastX = touch.clientX;
       touchStartY = touch.clientY;
+      isSwipingVertically = false;
 
-      // Double-tap easter egg to rebuild 3D cat polygon matrix
-      const now = performance.now();
-      if (now - lastTouchTapTime < 340) {
-        if (typeof startNic0Reveal === 'function') {
-          startNic0Reveal();
-          if (navigator.vibrate) {
-            try { navigator.vibrate([15, 35, 15]); } catch (_) {}
-          }
-        }
-      }
-      lastTouchTapTime = now;
-
-      if (e.target && e.target.closest('a, button, input, .lofi-control, .scheme-bar')) return;
+      if (e.target && e.target.closest && e.target.closest('a, button, input, .scheme-bar')) return;
       mx = (touch.clientX / window.innerWidth - 0.5) * 2;
       my = (touch.clientY / window.innerHeight - 0.5) * 2;
-      startPatting(touch.clientX, touch.clientY);
+
+      // Only start patting if touch is on/near the cat
+      const headPos = getCatHeadScreenPos();
+      const distToHead = Math.hypot(touch.clientX - headPos.x, touch.clientY - headPos.y);
+      const isMobile = window.innerWidth <= 768;
+      const hitRadius = isMobile ? 120 : HEAD_MAGNETIC_RADIUS;
+
+      if (distToHead < hitRadius) {
+        startPatting(touch.clientX, touch.clientY);
+      }
     }
   }, { passive: true });
 
-  window.addEventListener('touchend', stopPatting);
-  window.addEventListener('touchcancel', stopPatting);
+  window.addEventListener('touchend', () => {
+    lastTouchEndTime = performance.now();
+    stopPatting();
+  }, { passive: true });
+
+  window.addEventListener('touchcancel', () => {
+    lastTouchEndTime = performance.now();
+    stopPatting();
+  }, { passive: true });
 
   // Prevent mobile long-press context menu & selection bubble on 3D canvas / hero
   window.addEventListener('contextmenu', e => {
-    if (e.target && (e.target.id === 'gl' || e.target.closest('.hero-bg') || e.target.closest('.hero') || e.target.closest('.petpet-hand'))) {
+    if (e.target && (e.target.id === 'gl' || (e.target.closest && (e.target.closest('.hero-bg') || e.target.closest('.hero') || e.target.closest('.petpet-hand'))))) {
       e.preventDefault();
     }
   });
@@ -1186,13 +1143,30 @@ document.getElementById('btn-scroll')?.addEventListener('click', () => {
       mx = (touch.clientX / window.innerWidth - 0.5) * 2;
       my = (touch.clientY / window.innerHeight - 0.5) * 2;
 
-      const dx = touch.clientX - touchLastX;
-      const dy = touch.clientY - touchStartY;
+      const totalDx = touch.clientX - touchStartX;
+      const totalDy = touch.clientY - touchStartY;
+      const stepDx = touch.clientX - touchLastX;
       touchLastX = touch.clientX;
 
-      // Swipe horizontally to spin cat with inertia
-      if (Math.abs(touch.clientX - touchStartX) > 8 && Math.abs(dx) > Math.abs(dy) * 0.45) {
-        catSwipeSpinVelocity += dx * 0.007;
+      // 1. Swipe up on Hero to open Works section ("синяя шапка")
+      if (!isSwipingVertically && window.scrollY < 80 && totalDy < -45 && Math.abs(totalDy) > Math.abs(totalDx) * 1.1) {
+        isSwipingVertically = true;
+        stopPatting();
+        const works = document.getElementById('works');
+        if (works) {
+          works.scrollIntoView({ behavior: 'smooth' });
+          setTimeout(runWorksEntranceAnimations, 250);
+        }
+      }
+
+      // If finger moved significantly (> 16px), cancel patting so scrolling/swiping isn't interrupted
+      if (Math.hypot(totalDx, totalDy) > 16 && isPatHolding) {
+        stopPatting();
+      }
+
+      // 2. Swipe horizontally to spin cat with inertia
+      if (!isSwipingVertically && Math.abs(totalDx) > 10 && Math.abs(stepDx) > Math.abs(totalDy) * 0.4) {
+        catSwipeSpinVelocity += stepDx * 0.007;
         catSwipeSpinVelocity = Math.max(-0.24, Math.min(0.24, catSwipeSpinVelocity));
       }
     }
