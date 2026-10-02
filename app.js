@@ -619,10 +619,26 @@ function attachHoverScramble(el) {
 
   let timer = null;
   let isScrambling = false;
+  let lastScrambleEndTime = 0;
+
+  function endScramble() {
+    clearInterval(timer);
+    target.innerHTML = target.getAttribute('data-original-html') || originalHTML;
+    el.style.minWidth = '';
+    isScrambling = false;
+    lastScrambleEndTime = performance.now();
+  }
 
   el.addEventListener('mouseenter', () => {
-    if (isScrambling) return;
+    if (isScrambling || (performance.now() - lastScrambleEndTime < 220)) return;
     isScrambling = true;
+
+    // Lock width so proportional font character swaps don't shift button boundaries under the cursor
+    const rect = el.getBoundingClientRect();
+    if (rect.width > 0) {
+      el.style.minWidth = `${Math.ceil(rect.width)}px`;
+    }
+
     let frame = 0;
     const totalFrames = 8;
     clearInterval(timer);
@@ -630,9 +646,7 @@ function attachHoverScramble(el) {
     timer = setInterval(() => {
       frame++;
       if (frame >= totalFrames) {
-        clearInterval(timer);
-        target.innerHTML = target.getAttribute('data-original-html') || originalHTML;
-        isScrambling = false;
+        endScramble();
       } else {
         let str = '';
         for (let i = 0; i < originalText.length; i++) {
@@ -653,9 +667,10 @@ function attachHoverScramble(el) {
   });
 
   el.addEventListener('mouseleave', () => {
-    clearInterval(timer);
-    target.innerHTML = target.getAttribute('data-original-html') || originalHTML;
-    isScrambling = false;
+    if (!isScrambling) {
+      target.innerHTML = target.getAttribute('data-original-html') || originalHTML;
+      el.style.minWidth = '';
+    }
   });
 }
 
